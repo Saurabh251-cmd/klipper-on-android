@@ -1,5 +1,5 @@
 # Using Android to run Klipper, Moonraker, Mainsail/Fuidd, and KlipperScreen
-# Easier Version: https://github.com/gaifeng8864/klipper-on-android
+## Alternative Version: https://github.com/gaifeng8864/klipper-on-android (uses fluidd and simplifies the script creation)
 
 ### Disclaimer: this is an ongoing work, still some changes pending. will try to update it when i can.
 #### Original work by @RyanEwen (https://gist.github.com/RyanEwen/ae81fc48ad00397f1026915f0e6beed9)
@@ -9,14 +9,12 @@
   - Linux Deploy app: https://play.google.com/store/apps/details?id=ru.meefik.linuxdeploy
   - XServer app: https://play.google.com/store/apps/details?id=x.org.server
   - Octo4a app: https://github.com/feelfreelinux/octo4a
-  - Thermux app: https://play.google.com/store/apps/details?id=com.termux&hl=en&gl=US
 - An OTG+Charge cable up and running for the same device ( please check this video for reference: https://www.youtube.com/watch?v=8afFKyIbky0)
 - An already flashed printer using Klipper firmware. 
   - For reference : https://3dprintbeginner.com/how-to-install-klipper-on-sidewinder-x2/
 
 - Init scripts for Klipper and Moonraker (scripts folder).
 - XTerm script for KlipperScreen (scripts folder).
-- 
  
 ## Setup Instructions
 - Create a container within Linux Deploy using the following settings:
@@ -27,8 +25,8 @@
     - **Installation path**: `/data/local/debian`  
     *Note: You can choose a different location but if it's within `${EXTERNALDATA}` then SSH may fail to start.*  
     - **User name**: `android`  
-    *Note: You can choose something else if you make sure to update the scripts in this gist accordingly.*  
-  - **Init**:
+    *Note: You can choose something else if you make sure to update the scripts, configs and paths in this tutorial accordingly.*  
+  - **INIT**:
     - **Enable**: `yes`
     - **Init system**: `sysv`
   - **SSH**:
@@ -55,20 +53,21 @@
     - Install Octo4a from https://github.com/feelfreelinux/octo4a/releases
     - Run Octo4a and let it install OctoPrint (optionally tap the Stop button once it's done installing).
     - Make sure Octo4a sees your printer (it will be listed with a checked-box next to it).
-    - Install Termux from https://f-droid.org/en/packages/com.termux
-    - Run Termux and find the serial device created by Octo4a: 
-        ```bash
-        pkg install tsu
-        sudo ls -al /data/data/com.octo4a/files/serialpipe
-        ```
-        You should see that `/data/data/com.octo4a/files/serialpipe` is a link to `/dev/pts/0` or similar. Whatever it's linked to is the serial port you should use in `printer.cfg`. You can uninstall Termux after this as it's not needed for anything else.
+      - There will be a prompt in your android device asking for permission to connect to your printer if detected.
+    - Now you need to go back to Linux Deploy and edit the container settings:
+      - **MOUNTS**:
+          - **Enable**: `yes`
+          - **Mount points**: press on the "+" button
+            - Source: `/data/data/com.octo4a/files`
+            - Target: `/home/android/octo4a`
+    - `/home/android/octo4a/serialpipe` is the serial port you need to use in your `printer.cfg`
 - Make the serial device accessible to Klipper:
     ```bash
     sudo chmod 777 /dev/ttyACM0
     # or 
     sudo chmod 777 /dev/ttyUSB0
     # or 
-    sudo chmod 777 /dev/pts/0
+    sudo chmod 777 /home/android/octo4a/serialpipe
     ```
 - Install the init and xterm scripts from this gist:  
   ```bash
@@ -96,6 +95,9 @@
 ## Misc
 You can start/stop Klipper and Moonraker manually by using the `service` command (eg: `sudo service start klipper`).  
 Logs can be found in `/home/android/klipper_logs`.
+
+## Telegram Bot
+You can find the instructions how to setup the Telegram Bot [here](https://github.com/d4rk50ul1/klipper-on-android/blob/main/telegram_instructions.md)
 
 ## Troubleshooting (ongoing section based on comments)
 - There might be the case that when accessing Mainsail through Browser, you get an error message and no connection to moonraker: mainsail Permission denied while connecting to upstream in `klipper_logs/mainsail_error.log`. To fix this you must change the file `/etc/nginx/nginx.conf`, change `user www-data;` to `user android;` 
